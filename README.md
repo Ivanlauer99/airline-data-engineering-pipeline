@@ -1,2 +1,2 @@
-# spotify-data-engineering-pipeline
-Data Engineering project focused on building a Spotify data pipeline using Databricks, PySpark, SQL and Delta Lake. The project applies ETL processes, Medallion Architecture and Star Schema modeling to transform raw data into analytics-ready datasets.
+# ✈️ Airline Data Engineering Pipeline
+End-to-end Data Engineering pipeline built using real airline flight data from the Bureau of Transportation Statistics. The project implements a Medallion Architecture (Bronze, Silver, Gold) using Databricks, Apache Spark and Delta Lake.
