@@ -1,210 +1,151 @@
-# ✈️ Airline Data Engineering Project
+# ✈️ Airline Data Pipeline (Bronze → Silver → Gold)
 
-## 📌 Descripción del proyecto
+## 🚀 Descripción del proyecto
 
-Este proyecto implementa un pipeline de datos utilizando una arquitectura Medallion (Bronze, Silver y Gold) sobre un dataset de vuelos comerciales.
+Este proyecto implementa un pipeline de Data Engineering con arquitectura **Medallion (Bronze, Silver, Gold)** para el análisis de vuelos comerciales.
 
-El objetivo es realizar la ingesta, validación, limpieza y transformación de datos para generar información confiable para análisis de operaciones aéreas.
-
-La fuente contiene información sobre:
-- vuelos
-- aerolíneas
-- aeropuertos origen/destino
-- horarios programados y reales
-- retrasos
-- cancelaciones
-- distancia y tiempos de vuelo
+El objetivo es construir un **modelo estrella (Star Schema)** optimizado para análisis de puntualidad, aerolíneas, aeropuertos y desempeño operativo.
 
 ---
 
-# 🏗️ Arquitectura del proyecto
+## 🏗️ Arquitectura del pipeline
 
-### Landing
-Contiene los archivos CSV originales sin modificaciones.
-
-### Bronze
-Se almacenan los datos tal como fueron ingeridos desde la fuente en formato Delta.
-
-Tabla: airline_catalog.bronze.flights_bronze
-
-
-### Silver
-Capa destinada a:
-- limpieza
-- normalización de tipos
-- tratamiento de valores nulos
-- generación de columnas derivadas
-
-### Gold
-Capa analítica con métricas para consumo final.
+### 🟤 Bronze Layer
+- Datos crudos del dataset de vuelos
+- Sin transformaciones complejas
+- Conserva estructura original del origen
 
 ---
 
-# 🔎 Exploración inicial del dataset (EDA)
-
-## Información general
-
-**Registros analizados:**
-
-539.747 vuelos
-
-**Período analizado:**
-
-Enero 2025
-
-El dataset contiene información operacional de vuelos incluyendo:
-
-- aerolínea operadora
-- número de vuelo
-- aeropuerto origen y destino
-- horarios programados
-- horarios reales
-- demoras
-- cancelaciones
-- causas de retraso
+### ⚪ Silver Layer
+- Datos limpios y estandarizados
+- Tipos de datos corregidos
+- Columnas normalizadas
+- Preparado para modelado dimensional
 
 ---
 
-# 📊 Hallazgos de calidad de datos
+### 🟡 Gold Layer (Modelo Estrella)
 
-## Valores nulos
+#### 📌 Dimensiones
+- `dim_airline` → aerolíneas enriquecidas con lookup
+- `dim_airport` → aeropuertos origen/destino con información geográfica y nombre
+- `dim_date` → dimensión calendario para análisis temporal
 
-Se analizaron valores faltantes por columna.
-
-Principales campos afectados:
-
-| Columna | % Nulos |
-|---|---:|
-| CANCELLATION_CODE | 96.98% |
-| CARRIER_DELAY | 81.82% |
-| WEATHER_DELAY | 81.82% |
-| NAS_DELAY | 81.82% |
-| SECURITY_DELAY | 81.82% |
-
-### Interpretación
-
-Los valores nulos encontrados corresponden principalmente a ausencia de eventos:
-
-- `CANCELLATION_CODE` solo existe cuando el vuelo fue cancelado.
-- Las causas de demora solo se completan cuando existe una demora asociada.
-
-Por lo tanto, no representan necesariamente errores de calidad.
+#### 📌 Tabla de hechos
+- `fact_flights` → eventos de vuelos con métricas operacionales
 
 ---
 
-# 🚫 Valores inválidos
+## 🧠 Modelo de datos
 
-Se realizaron validaciones sobre campos críticos:
+El modelo sigue un **Star Schema**:
 
-| Validación | Resultado |
-|-|-|
-| Demoras negativas | 0 registros |
-| Distancias inválidas | 0 registros |
-| Duplicados | 0 registros |
+- 1 tabla de hechos central (`fact_flights`)
+- Dimensiones conformadas reutilizables
 
-El dataset no presenta problemas críticos de integridad.
+Relaciones:
+
+- fact_flights → dim_airline
+- fact_flights → dim_airport (origen)
+- fact_flights → dim_airport (destino)
+- fact_flights → dim_date
+
+                         ┌────────────────────┐
+                         │     dim_date       │
+                         │--------------------│
+                         │ date_id (PK)       │
+                         │ year               │
+                         │ month              │
+                         │ day                │
+                         │ day_of_week        │
+                         └─────────┬──────────┘
+                                   │
+                                   │
+┌────────────────────┐     ┌───────▼──────────────┐     ┌────────────────────┐
+│   dim_airline      │     │    fact_flights      │     │   dim_airport      │
+│--------------------│     │----------------------│     │--------------------│
+│ airline_id (PK)    │────▶│ flight_id (PK)       │◀────│ airport_id (PK)    │
+│ airline_code       │     │ date_id (FK)         │     │ airport_code       │
+│ airline_name       │     │ airline_id (FK)      │     │ city               │
+└────────────────────┘     │ origin_airport_id    │     │ state              │
+                           │ destination_airport_id│     │ airport_name       │
+                           │ flight_number        │     └────────────────────┘
+                           │ departure_delay      │
+                           │ arrival_delay        │
+                           │ distance             │
+                           │ cancelled            │
+                           └──────────────────────┘
+---
+
+## 🔄 Pipeline de datos
+
+1. Ingesta de datos en Bronze
+2. Limpieza y normalización en Silver
+3. Enriquecimiento con lookup tables
+4. Construcción de dimensiones
+5. Construcción de fact table con MERGE idempotente
 
 ---
 
-# 🔄 Problemas de transformación detectados
+## ⚙️ Características técnicas
 
-## Fechas
-
-Campo: 
-FL_DATE
-Actualmente:
-STRING
-Acción en Silver: Convertir a: DATE
-
+- ✔ Arquitectura Medallion
+- ✔ Modelo estrella (Star Schema)
+- ✔ Cargas idempotentes con MERGE
+- ✔ Uso de surrogate keys en dimensiones
+- ✔ Enriquecimiento con lookup tables
+- ✔ Manejo de valores nulos en métricas de delay
 
 ---
 
-## Horarios
+## ✈️ Dataset
 
-Campos:
-CRS_DEP_TIME
-DEP_TIME
-CRS_ARR_TIME
-ARR_TIME
+El dataset contiene información de vuelos comerciales:
 
-Actualmente almacenados como: INT 
-Formato:
-1301 → 13:01
-
-Acción en Silver:
-
-Transformar a formato horario para facilitar análisis temporales.
+- Fechas de vuelo
+- Aeropuertos de origen y destino
+- Aerolíneas
+- Horarios programados y reales
+- Demoras por múltiples causas
+- Distancia y duración del vuelo
 
 ---
 
-## Campos booleanos
+## 📊 Casos de uso
 
-Campos:
-CANCELLED
-DIVERTED
+Este modelo permite analizar:
 
-Actualmente:
-DOUBLE 
-Acción:
-Convertir a: BOOLEAN
-
----
-
-# 🧹 Recomendaciones para Silver
-
-Las transformaciones definidas son:
-
-- Normalización de tipos de datos.
-- Conversión de fechas y horarios.
-- Tratamiento de valores nulos según lógica de negocio.
-- Eliminación de columnas técnicas como `_rescued_data`.
-- Creación de columnas derivadas:
-
-  - estado del vuelo
-  - duración del vuelo
-  - diferencia entre horario programado y real
-  - clasificación de demora
+- Puntualidad de aerolíneas
+- Aeropuertos con mayor retraso
+- Tendencias por tiempo (día/mes/año)
+- Impacto del clima en vuelos
+- Rutas más frecuentes y problemáticas
 
 ---
 
-# 📈 Análisis futuros (Gold)
+## 🧩 Tecnologías utilizadas
 
-Se plantean métricas analíticas como:
-
-## Performance de aerolíneas
-
-- cantidad de vuelos
-- demora promedio
-- porcentaje de cancelaciones
-
-## Análisis de aeropuertos
-
-- aeropuertos con mayor tráfico
-- rutas más frecuentes
-
-## Análisis de puntualidad
-
-- vuelos demorados
-- distribución de retrasos
-- principales causas
+- SQL (Spark SQL / Delta Lake)
+- Databricks Lakehouse
+- Modelado dimensional (Kimball)
+- MERGE para cargas idempotentes
 
 ---
 
-# 🛠️ Tecnologías utilizadas
+## 📌 Estado del proyecto
 
-- Databricks
-- Unity Catalog
-- Delta Lake
-- SQL
-- Arquitectura Medallion
+- ✔ Bronze implementado
+- ✔ Silver estructurado
+- ✔ Dimensiones creadas
+- ✔ Lookup integration completada
+- ✔ Fact table en Star Schema
 
 ---
 
-# ✅ Estado del proyecto
+## 🚀 Próximos pasos
 
-✔ Dataset cargado en Landing  
-✔ Tabla Bronze creada  
-✔ Exploración inicial realizada  
-✔ Validaciones de calidad completadas  
-⬜ Construcción de Silver  
-⬜ Desarrollo de métricas Gold
+- Optimización de performance (partitioning / ZORDER)
+- Creación de métricas GOLD (KPIs de puntualidad)
+- Dashboards en Power BI / Tableau
+- Data Quality layer
