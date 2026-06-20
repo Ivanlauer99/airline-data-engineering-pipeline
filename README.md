@@ -51,31 +51,6 @@ Relaciones:
 - fact_flights → dim_airport (destino)
 - fact_flights → dim_date
 
-                         ┌────────────────────┐
-                         │     dim_date       │
-                         │--------------------│
-                         │ date_id (PK)       │
-                         │ year               │
-                         │ month              │
-                         │ day                │
-                         │ day_of_week        │
-                         └─────────┬──────────┘
-                                   │
-                                   │
-┌────────────────────┐     ┌───────▼──────────────┐     ┌────────────────────┐
-│   dim_airline      │     │    fact_flights      │     │   dim_airport      │
-│--------------------│     │----------------------│     │--------------------│
-│ airline_id (PK)    │────▶│ flight_id (PK)       │◀────│ airport_id (PK)    │
-│ airline_code       │     │ date_id (FK)         │     │ airport_code       │
-│ airline_name       │     │ airline_id (FK)      │     │ city               │
-└────────────────────┘     │ origin_airport_id    │     │ state              │
-                           │ destination_airport_id│     │ airport_name       │
-                           │ flight_number        │     └────────────────────┘
-                           │ departure_delay      │
-                           │ arrival_delay        │
-                           │ distance             │
-                           │ cancelled            │
-                           └──────────────────────┘
 ---
 
 ## 🔄 Pipeline de datos
