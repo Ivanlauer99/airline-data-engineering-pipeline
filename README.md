@@ -2,150 +2,334 @@
 
 ## 🚀 Descripción del proyecto
 
-Este proyecto implementa un pipeline de Data Engineering con arquitectura **Medallion (Bronze, Silver, Gold)** para el análisis de vuelos comerciales.
+Este proyecto implementa un pipeline de **Data Engineering** utilizando arquitectura **Medallion (Bronze, Silver, Gold)** para el procesamiento y análisis de datos de vuelos comerciales.
 
-El objetivo es construir un **modelo estrella (Star Schema)** optimizado para análisis de puntualidad, aerolíneas, aeropuertos y desempeño operativo.
+El objetivo es construir una solución de datos basada en **Databricks Lakehouse**, utilizando procesos **ETL/ELT**, almacenamiento en **Delta Lake** y un modelo dimensional optimizado para análisis de negocio.
+
+El modelo final permite analizar:
+
+- Puntualidad de vuelos
+- Rendimiento de aerolíneas
+- Performance de aeropuertos
+- Tendencias temporales
+- Principales causas de demoras
+
 
 ---
 
-## 🏗️ Arquitectura del pipeline
+# 🏗️ Arquitectura del pipeline
 
-### 🟤 Bronze Layer
+Flujo general:
+Dataset Fuente
+|
+↓
+Landing Layer
+|
+↓
+Bronze Layer
+(Datos crudos)
+|
+↓
+Silver Layer
+(Limpieza y transformación)
+|
+↓
+Gold Layer
+(Star Schema)
+|
+↓
+Analytics / BI
+
+
+
+---
+
+# 🟤 Bronze Layer
+
+## Objetivo
+
+Mantener una copia inicial de los datos provenientes del origen conservando la estructura original.
+
+Características:
+
 - Datos crudos del dataset de vuelos
 - Sin transformaciones complejas
 - Conserva estructura original del origen
+- Almacenamiento en formato Delta
+
 
 ---
 
-### ⚪ Silver Layer
-- Datos limpios y estandarizados
-- Tipos de datos corregidos
-- Columnas normalizadas
-- Preparado para modelado dimensional
+# ⚪ Silver Layer
+
+## Objetivo
+
+Transformar los datos Bronze en información limpia y consistente preparada para consumo analítico.
+
+Procesos realizados:
+
+- Corrección de tipos de datos
+- Normalización de columnas
+- Limpieza de registros
+- Tratamiento de valores nulos
+- Preparación para modelado dimensional
+
 
 ---
 
-### 🟡 Gold Layer (Modelo Estrella)
+# 🟡 Gold Layer (Modelo Estrella)
 
-#### 📌 Dimensiones
-- `dim_airline` → aerolíneas enriquecidas con lookup
-- `dim_airport` → aeropuertos origen/destino con información geográfica y nombre
-- `dim_date` → dimensión calendario para análisis temporal
+La capa Gold implementa un modelo dimensional siguiendo buenas prácticas de **Kimball Dimensional Modeling**.
 
-#### 📌 Tabla de hechos
-- `fact_flights` → eventos de vuelos con métricas operacionales
+
+## 📌 Dimensiones
+
+### dim_airline
+
+Aerolíneas enriquecidas mediante lookup tables.
+
+Contiene:
+
+- Código de aerolínea
+- Nombre
+- Identificadores dimensionales
+
+
+### dim_airport
+
+Información de aeropuertos origen y destino:
+
+- Código
+- Nombre
+- Ciudad
+- Estado
+- Información geográfica
+
+
+### dim_date
+
+Dimensión calendario para análisis temporal:
+
+- Día
+- Mes
+- Año
+- Día de semana
+
 
 ---
 
-## 🧠 Modelo de datos
+## 📌 Tabla de hechos
+
+### fact_flights
+
+Tabla central del modelo que representa eventos de vuelos.
+
+Incluye métricas operacionales:
+
+- Distancia
+- Demoras
+- Cancelaciones
+- Información temporal
+- Relaciones con dimensiones
+
+
+---
+
+# 🧠 Modelo de datos
 
 El modelo sigue un **Star Schema**:
 
 - 1 tabla de hechos central (`fact_flights`)
 - Dimensiones conformadas reutilizables
 
+
 Relaciones:
+fact_flights → dim_airline
 
-- fact_flights → dim_airline
-- fact_flights → dim_airport (origen)
-- fact_flights → dim_airport (destino)
-- fact_flights → dim_date
+fact_flights → dim_airport (origen)
 
-                         ┌────────────────────┐
-                         │     dim_date       │
-                         │--------------------│
-                         │ date_id (PK)       │
-                         │ year               │
-                         │ month              │
-                         │ day                │
-                         │ day_of_week        │
-                         └─────────┬──────────┘
-                                   │
-                                   │
-┌────────────────────┐     ┌───────▼──────────────┐     ┌────────────────────┐
-│   dim_airline      │     │    fact_flights      │     │   dim_airport      │
-│--------------------│     │----------------------│     │--------------------│
-│ airline_id (PK)    │────▶│ flight_id (PK)       │◀────│ airport_id (PK)    │
-│ airline_code       │     │ date_id (FK)         │     │ airport_code       │
-│ airline_name       │     │ airline_id (FK)      │     │ city               │
-└────────────────────┘     │ origin_airport_id    │     │ state              │
-                           │ destination_airport_id│     │ airport_name       │
-                           │ flight_number        │     └────────────────────┘
-                           │ departure_delay      │
-                           │ arrival_delay        │
-                           │ distance             │
-                           │ cancelled            │
-                           └──────────────────────┘
+fact_flights → dim_airport (destino)
+
+fact_flights → dim_date
+
+
+
 ---
 
-## 🔄 Pipeline de datos
+# 🔄 Pipeline de datos
+
+El proceso completo incluye:
 
 1. Ingesta de datos en Bronze
 2. Limpieza y normalización en Silver
-3. Enriquecimiento con lookup tables
+3. Enriquecimiento mediante lookup tables
 4. Construcción de dimensiones
-5. Construcción de fact table con MERGE idempotente
+5. Construcción de tabla de hechos
+6. Cargas incrementales mediante MERGE idempotente
+7. Validaciones de calidad de datos
+
 
 ---
 
-## ⚙️ Características técnicas
+# ⚙️ Características técnicas
 
-- ✔ Arquitectura Medallion
-- ✔ Modelo estrella (Star Schema)
-- ✔ Cargas idempotentes con MERGE
-- ✔ Uso de surrogate keys en dimensiones
-- ✔ Enriquecimiento con lookup tables
-- ✔ Manejo de valores nulos en métricas de delay
+✔ Arquitectura Medallion (Bronze / Silver / Gold)
+
+✔ Databricks Lakehouse
+
+✔ Apache Spark
+
+✔ PySpark
+
+✔ Spark SQL
+
+✔ Delta Lake
+
+✔ Procesos ETL / ELT
+
+✔ Modelo estrella (Star Schema)
+
+✔ Modelado dimensional Kimball
+
+✔ Surrogate Keys
+
+✔ Lookup Tables
+
+✔ MERGE para cargas idempotentes
+
+✔ Data Quality Checks
+
 
 ---
 
-## ✈️ Dataset
+# ✈️ Dataset
 
 El dataset contiene información de vuelos comerciales:
 
 - Fechas de vuelo
-- Aeropuertos de origen y destino
+- Aeropuertos origen y destino
 - Aerolíneas
 - Horarios programados y reales
 - Demoras por múltiples causas
-- Distancia y duración del vuelo
+- Distancia
+- Duración del vuelo
+
 
 ---
 
-## 📊 Casos de uso
+# 📊 Business Questions
 
-Este modelo permite analizar:
+La capa Gold permite responder preguntas como:
 
-- Puntualidad de aerolíneas
-- Aeropuertos con mayor retraso
-- Tendencias por tiempo (día/mes/año)
-- Impacto del clima en vuelos
-- Rutas más frecuentes y problemáticas
 
----
+## ✈️ Aerolíneas
 
-## 🧩 Tecnologías utilizadas
+- ¿Qué aerolíneas presentan mayor demora promedio?
+- ¿Cuál tiene mejor porcentaje de puntualidad?
+- ¿Qué compañías tienen mayor cantidad de vuelos?
 
-- SQL (Spark SQL / Delta Lake)
-- Databricks Lakehouse
-- Modelado dimensional (Kimball)
-- MERGE para cargas idempotentes
 
----
+## 🛫 Aeropuertos
 
-## 📌 Estado del proyecto
+- ¿Qué aeropuertos presentan mayor retraso?
+- ¿Cuáles tienen peor desempeño operacional?
 
-- ✔ Bronze implementado
-- ✔ Silver estructurado
-- ✔ Dimensiones creadas
-- ✔ Lookup integration completada
-- ✔ Fact table en Star Schema
+
+## 📅 Tiempo
+
+- ¿Cómo evolucionan los retrasos por día, mes y año?
+- ¿Qué períodos presentan mayor volumen de vuelos?
+
 
 ---
 
-## 🚀 Próximos pasos
+# 🔍 Data Quality
 
-- Optimización de performance (partitioning / ZORDER)
+Se implementan controles para validar:
+
+- Registros duplicados
+- Valores nulos críticos
+- Integridad referencial entre dimensiones y hechos
+- Consistencia de métricas operacionales
+
+
+---
+
+# 🧩 Tecnologías utilizadas
+
+- Python
+- SQL
+- Apache Spark
+- PySpark
+- Spark SQL
+- Databricks
+- Delta Lake
+- Git / GitHub
+
+
+---
+
+# 📂 Estructura del proyecto
+airline-data-pipeline/
+
+│
+├── README.md
+│
+├── docs/
+│ └── star_schema.png
+│
+├── Bronze/
+│
+├── Silver/
+│
+├── Gold/
+│
+└── sql/
+└── analytics/
+├── airline_performance.sql
+├── airport_delay_analysis.sql
+└── flight_kpis.sql
+
+---
+
+# 📌 Estado del proyecto
+
+✔ Bronze implementado
+
+✔ Silver estructurado
+
+✔ Dimensiones creadas
+
+✔ Lookup integration completada
+
+✔ Fact table implementada
+
+✔ Star Schema construido
+
+✔ Consultas analíticas desarrolladas
+
+
+---
+
+# 🚀 Próximos pasos
+
+- Optimización de performance con partitioning y ZORDER
 - Creación de métricas GOLD (KPIs de puntualidad)
 - Dashboards en Power BI / Tableau
-- Data Quality layer
+- Mayor cobertura de Data Quality
+- Orquestación con Apache Airflow
+
+
+---
+
+# 👨‍💻 Autor
+
+**Ivan Alejandro Lauer**
+
+Junior Data Engineer en formación
+
+GitHub:
+https://github.com/Ivanlauer99/
+
+LinkedIn:
+https://www.linkedin.com/in/ivan-lauer-data/
