@@ -4,7 +4,34 @@
 [![Delta Lake](https://img.shields.io/badge/Delta%20Lake-Enabled-blue)](https://delta.io/)
 [![SQL](https://img.shields.io/badge/SQL-Spark%20SQL-orange)](https://spark.apache.org/sql/)
 [![Architecture](https://img.shields.io/badge/Architecture-Medallion-green)](https://www.databricks.com/glossary/medallion-architecture)
+---------------------
+## 🎯 TL;DR
 
+Data pipeline processing **7,000,000+ flight records** across **352 airports** in the U.S., built with the same tech stack used in production by companies like Netflix, Uber, and Airbnb: **Databricks, Apache Spark, Delta Lake**.
+
+- 📊 **7M+ records** processed end-to-end (ingestion → cleaning → analytics-ready model)
+- 🏗️ 3-layer architecture (**Bronze → Silver → Gold**), the industry standard for reliable data pipelines
+- ⭐ Dimensional model (**Star Schema**) ready to plug into BI tools like Power BI or Tableau
+- 🔁 Incremental loads with no duplicate data (idempotent **MERGE/UPSERT** operations)
+- ✅ **Fully functional project**, open-source and documented
+
+👉 *For the full technical breakdown (architecture, design decisions, how to run it), keep reading below.*
+
+-----
+
+## 🎯 En resumen
+
+Pipeline de datos que procesa **7,000,000+ registros de vuelos** y **352 aeropuertos** de EE.UU., usando el mismo stack tecnológico que usan empresas como Netflix, Uber o Airbnb en producción: **Databricks, Apache Spark, Delta Lake**.
+
+- 📊 **7M+ registros** procesados de punta a punta (ingesta → limpieza → modelo analítico)
+- 🏗️ Arquitectura en 3 capas (**Bronze → Silver → Gold**), el estándar de la industria para pipelines confiables
+- ⭐ Modelo dimensional (**Star Schema**) listo para conectar a herramientas de BI como Power BI o Tableau
+- 🔁 Cargas incrementales sin duplicar datos (operaciones **MERGE/UPSERT** idempotentes)
+- ✅ **Proyecto 100% funcional**, de código abierto y documentado
+
+👉 *Si querés el detalle técnico completo (arquitectura, decisiones de diseño, cómo ejecutarlo), seguí leyendo más abajo.*
+
+------
 ## 📋 Tabla de contenidos
 
 * [Descripción del proyecto](#-descripción-del-proyecto)
