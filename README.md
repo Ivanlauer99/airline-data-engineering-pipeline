@@ -374,7 +374,9 @@ Para ejecutar el pipeline automáticamente:
 
 ---
 
-## 📊 Casos de uso
+# 🔍 Data Quality
+
+Se implementan controles para validar:
 
 Una vez completado el pipeline, puedes responder preguntas como:
 
@@ -416,7 +418,44 @@ Una vez completado el pipeline, puedes responder preguntas como:
 
 ---
 
-## 📌 Estado del proyecto
+# 📂 Estructura del proyecto
+airline-data-pipeline/
+
+│
+├── README.md
+│
+├── docs/
+│ └── star_schema.png
+│
+├── Bronze/
+│
+├── Silver/
+│
+├── Gold/
+│
+└── sql/
+└── analytics/
+├── airline_performance.sql
+├── airport_delay_analysis.sql
+└── flight_kpis.sql
+
+---
+
+# 📌 Estado del proyecto
+
+✔ Bronze implementado
+
+✔ Silver estructurado
+
+✔ Dimensiones creadas
+
+✔ Lookup integration completada
+
+✔ Fact table implementada
+
+✔ Star Schema construido
+
+✔ Consultas analíticas desarrolladas
 
 ### ✅ Proyecto 100% Completado
 
